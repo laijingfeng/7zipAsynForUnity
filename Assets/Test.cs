@@ -1,7 +1,5 @@
 ﻿using UnityEditor;
 using UnityEngine;
-using System;
-using System.Threading;
 
 public class Test : MonoBehaviour
 {
@@ -19,31 +17,23 @@ public class Test : MonoBehaviour
     [ContextMenu("Do")]
     private void Do()
     {
-        Compress.CompressFile(Application.dataPath + "/../" + fileName);
-        AssetDatabase.Refresh();
+        Compress.Inst.CompressFile(Application.dataPath + "/../" + fileName, null, (n, t) =>
+        {
+            Debug.LogWarning(string.Format("{0}/{1}", n, t));
+        });
     }
-
-    public string pp;
 
     [ContextMenu("UnDo")]
     private void UnDo()
     {
-        pp = Application.dataPath + "/../" + fileName;
-        Thread m_DecompressThread = null;
-        m_DecompressThread = new Thread(new ThreadStart(DoDO));
-        m_DecompressThread.Start();  
-        
-        //AssetDatabase.Refresh();
+        Compress.Inst.DecompressFileLZMA(Application.dataPath + "/../" + fileName, null, (n, t) =>
+        {
+            Debug.LogWarning(string.Format("{0}/{1}", n, t));
+        });
     }
 
     private void DoDO()
     {
-        CodeProgress co = new CodeProgress(AA);
-        Compress.DecompressFile(pp, null, co);
-    }
-
-    private void AA(Int64 a, Int64 b)
-    {
-        Debug.Log("xx " + a + " " + b);
+        
     }
 }

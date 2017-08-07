@@ -227,6 +227,23 @@ namespace SevenZip.Compression.LZMA
             m_PosAlignDecoder.Init();
         }
 
+        private UInt64 nowPos64 = 0;
+        private UInt64 outSize64 = 1;
+        public UInt64 NowPos64
+        {
+            get
+            {
+                return nowPos64;
+            }
+        }
+        public UInt64 TargetPos64
+        {
+            get
+            {
+                return outSize64;
+            }
+        }
+        
         public void Code(System.IO.Stream inStream, System.IO.Stream outStream,
             Int64 inSize, Int64 outSize, ICodeProgress progress)
         {
@@ -236,8 +253,8 @@ namespace SevenZip.Compression.LZMA
             state.Init();
             uint rep0 = 0, rep1 = 0, rep2 = 0, rep3 = 0;
 
-            UInt64 nowPos64 = 0;
-            UInt64 outSize64 = (UInt64)outSize;
+            nowPos64 = 0;
+            outSize64 = (UInt64)outSize;
             if (nowPos64 < outSize64)
             {
                 if (m_IsMatchDecoders[state.Index << Base.kNumPosStatesBitsMax].Decode(m_RangeDecoder) != 0)
