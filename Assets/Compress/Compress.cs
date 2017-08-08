@@ -12,14 +12,14 @@ using UnityEngine;
 public class Compress : SingletonMono<Compress>
 {
     private bool compressFileLZMAFinish = true;
-    private Decoder coder = null;
+    private Encoder coder = null;
     private string inFile;
     private string outFile;
 
     /// <summary>
     /// 压缩文件
     /// </summary>
-    public void CompressFile(string in_file, string out_file = null, Action<UInt64, UInt64> progress = null, Action<bool> finish = null)
+    public void CompressFile(string in_file, string out_file = null, Action<Int64, Int64> progress = null, Action<bool> finish = null)
     {
         if (out_file == null)
         {
@@ -39,7 +39,7 @@ public class Compress : SingletonMono<Compress>
         }
     }
 
-    private IEnumerator IE_WaitCompressFileLZMA(Action<UInt64, UInt64> progress, Action<bool> finish)
+    private IEnumerator IE_WaitCompressFileLZMA(Action<Int64, Int64> progress, Action<bool> finish)
     {
         if (progress != null)
         {
@@ -63,11 +63,11 @@ public class Compress : SingletonMono<Compress>
 
         if (finish != null)
         {
-            if (coder == null || coder.NowPos64 < coder.TargetPos64)
-            {
-                finish(false);
-            }
-            else
+            //if (coder == null || coder.NowPos64 < coder.TargetPos64)
+            //{
+            //    finish(false);
+            //}
+            //else
             {
                 finish(true);
             }
@@ -83,18 +83,21 @@ public class Compress : SingletonMono<Compress>
         {
             if (!File.Exists(inFile))
             {
+                compressFileLZMAFinish = true;
                 return;
             }
             FileStream input = new FileStream(inFile, FileMode.Open);
             FileStream output = new FileStream(outFile, FileMode.OpenOrCreate);
 
-            Encoder coder = new Encoder();
+            coder = new Encoder();
             coder.WriteCoderProperties(output);
 
             byte[] data = BitConverter.GetBytes(input.Length);
 
             output.Write(data, 0, data.Length);
 
+            Debug.LogWarning(input.Length + " ");
+            
             coder.Code(input, output, input.Length, -1, null);
             output.Flush();
             output.Close();
@@ -104,6 +107,7 @@ public class Compress : SingletonMono<Compress>
         {
             Debug.LogError(ex.Message);
         }
+        compressFileLZMAFinish = true;
     }
 
     private bool decompressFileLZMAFinish = true;
@@ -187,7 +191,9 @@ public class Compress : SingletonMono<Compress>
 
             deCoder = new Decoder();
             deCoder.SetDecoderProperties(properties);
+            Debug.LogWarning(input.Length + " " + fileLength);
             deCoder.Code(input, output, input.Length, fileLength, null);
+
             output.Flush();
             output.Close();
             input.Close();

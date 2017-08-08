@@ -1269,6 +1269,22 @@ namespace SevenZip.Compression.LZMA
 			nowPos64 = 0;
 		}
 
+        private Int64 processedInSize = 0;
+        private Int64 processedOutSize = 1;
+        public Int64 NowPos64
+        {
+            get
+            {
+                return processedInSize;
+            }
+        }
+        public Int64 TargetPos64
+        {
+            get
+            {
+                return processedOutSize;
+            }
+        }
 
 		public void Code(System.IO.Stream inStream, System.IO.Stream outStream,
 			Int64 inSize, Int64 outSize, ICodeProgress progress)
@@ -1279,8 +1295,6 @@ namespace SevenZip.Compression.LZMA
 				SetStreams(inStream, outStream, inSize, outSize);
 				while (true)
 				{
-					Int64 processedInSize;
-					Int64 processedOutSize;
 					bool finished;
 					CodeOneBlock(out processedInSize, out processedOutSize, out finished);
 					if (finished)

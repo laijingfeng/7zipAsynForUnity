@@ -1,6 +1,4 @@
-﻿using UnityEngine;
-using System.Collections;
-
+﻿
 public class CompressUtil
 {
     /// <summary>
@@ -32,3 +30,19 @@ public class CompressUtil
         return compress_file_name.Replace(EXTENSION, "");
     }
 }
+
+public class CompressConfig
+{
+    public string inFile;
+    public string outFile;
+    public long inFileSize = 0;
+}
+
+public enum CompressState
+{
+    None = 0,
+    Working,
+    Finish,
+}
+
+public delegate void CompressCallback(long finishSize, long totalSize, CompressState status);

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.IO;
 using System.Threading;
 using SevenZip.Compression.LZMA;
@@ -10,86 +9,90 @@ using UnityEngine;
 /// </summary>
 public class CompressNotMono
 {
-    private bool compressFileLZMAFinish = true;
-    private Decoder coder = null;
-    private string inFile;
-    private string outFile;
+    private CompressConfig config;
+    private Thread thread = null;
+    private Encoder coder = null;
+    private Action finishCallback = null;
 
-    /// <summary>
-    /// 压缩文件
-    /// </summary>
-    public void CompressFile(string in_file, string out_file = null, Action<UInt64, UInt64> progress = null, Action<bool> finish = null)
+    private CompressState status = CompressState.None;
+    public CompressState Status
     {
-        if (out_file == null)
+        get
         {
-            out_file = CompressUtil.GetCompressFileName(in_file);
-        }
-        compressFileLZMAFinish = false;
-        coder = null;
-        inFile = in_file;
-        outFile = out_file;
-
-        Thread decompressThread = new Thread(new ThreadStart(DoCompressFileLZMA));
-        decompressThread.Start();
-
-        if (progress != null || finish != null)
-        {
-            //this.StartCoroutine(IE_WaitCompressFileLZMA(progress, finish));
+            return status;
         }
     }
 
-    private IEnumerator IE_WaitCompressFileLZMA(Action<UInt64, UInt64> progress, Action<bool> finish)
+    public long FinishSize
     {
-        if (progress != null)
+        get
         {
-            while (!compressFileLZMAFinish)
+            if (coder == null)
             {
-                if (coder != null)
-                {
-                    progress(coder.NowPos64, coder.TargetPos64);
-                }
-                yield return new WaitForEndOfFrame();
+                return 0;
             }
-            if (coder != null)
-            {
-                progress(coder.NowPos64, coder.TargetPos64);
-            }
+            return coder.NowPos64;
         }
-        else
-        {
-            yield return new WaitUntil(() => compressFileLZMAFinish == true);
-        }
+    }
 
-        if (finish != null)
+    public long TotalSize
+    {
+        get
         {
-            if (coder == null || coder.NowPos64 < coder.TargetPos64)
+            if (config != null)
             {
-                finish(false);
+                return config.inFileSize;
             }
-            else
-            {
-                finish(true);
-            }
+            return 0;
         }
+    }
+
+    public CompressNotMono(CompressConfig config, Action callback = null)
+    {
+        this.config = config;
+        this.finishCallback = callback;
+        if (config.inFileSize == 0
+            && File.Exists(this.config.inFile))
+        {
+            FileStream input = new FileStream(this.config.inFile, FileMode.Open);
+            config.inFileSize = input.Length;
+            input.Close();
+            input.Dispose();
+        }
+    }
+
+    public void StartCompress()
+    {
+        status = CompressState.Working;
+        thread = new Thread(new ThreadStart(DoCompress));
+        thread.IsBackground = true;
+        thread.Start();
     }
 
     /// <summary>
     /// 使用LZMA算法压缩文件  
     /// </summary>
-    private void DoCompressFileLZMA()
+    private void DoCompress()
     {
+        FileStream input = null;
+        FileStream output = null;
         try
         {
-            if (!File.Exists(inFile))
+            if (!File.Exists(this.config.inFile))
             {
+                status = CompressState.Finish;
+                if (finishCallback != null)
+                {
+                    finishCallback();
+                }
                 return;
             }
-            FileStream input = new FileStream(inFile, FileMode.Open);
-            FileStream output = new FileStream(outFile, FileMode.OpenOrCreate);
+            input = new FileStream(this.config.inFile, FileMode.Open);
+            output = new FileStream(this.config.outFile, FileMode.OpenOrCreate);
 
-            Encoder coder = new Encoder();
+            coder = new Encoder();
             coder.WriteCoderProperties(output);
-
+            
             byte[] data = BitConverter.GetBytes(input.Length);
 
             output.Write(data, 0, data.Length);
@@ -97,104 +100,31 @@ public class CompressNotMono
             coder.Code(input, output, input.Length, -1, null);
             output.Flush();
             output.Close();
+            output.Dispose();
             input.Close();
+            input.Dispose();
         }
         catch (System.Exception ex)
         {
             Debug.LogError(ex.Message);
         }
-    }
 
-    private bool decompressFileLZMAFinish = true;
-    private Decoder deCoder = null;
-    private string deInFile;
-    private string deOutFile;
-
-    public void DecompressFileLZMA(string inFile, string outFile, Action<UInt64, UInt64> progress = null, Action<bool> finish = null)
-    {
-        if (outFile == null)
+        if (input != null)
         {
-            outFile = CompressUtil.GetDefaultFileName(inFile);
-        }
-        decompressFileLZMAFinish = false;
-        deCoder = null;
-        deInFile = inFile;
-        deOutFile = outFile;
-
-        Thread decompressThread = new Thread(new ThreadStart(DoDecompressFileLZMA));
-        decompressThread.Start();
-
-        if (progress != null || finish != null)
-        {
-            //this.StartCoroutine(IE_WaitDecompressFileLZMA(progress, finish));
-        }
-    }
-
-    private IEnumerator IE_WaitDecompressFileLZMA(Action<UInt64, UInt64> progress, Action<bool> finish)
-    {
-        if (progress != null)
-        {
-            while (!decompressFileLZMAFinish)
-            {
-                if (deCoder != null)
-                {
-                    progress(deCoder.NowPos64, deCoder.TargetPos64);
-                }
-                yield return new WaitForEndOfFrame();
-            }
-            if (deCoder != null)
-            {
-                progress(deCoder.NowPos64, deCoder.TargetPos64);
-            }
-        }
-        else
-        {
-            yield return new WaitUntil(() => decompressFileLZMAFinish == true);
+            input.Close();
+            input.Dispose();
         }
 
-        if (finish != null)
+        if (output != null)
         {
-            if (deCoder == null || deCoder.NowPos64 < deCoder.TargetPos64)
-            {
-                finish(false);
-            }
-            else
-            {
-                finish(true);
-            }
-        }
-    }
-
-    private void DoDecompressFileLZMA()
-    {
-        try
-        {
-            if (!File.Exists(deInFile))
-            {
-                decompressFileLZMAFinish = true;
-                return;
-            }
-            FileStream input = new FileStream(deInFile, FileMode.Open);
-            FileStream output = new FileStream(deOutFile, FileMode.OpenOrCreate);
-
-            byte[] properties = new byte[5];
-            input.Read(properties, 0, 5);
-
-            byte[] fileLengthBytes = new byte[8];
-            input.Read(fileLengthBytes, 0, 8);
-            long fileLength = BitConverter.ToInt64(fileLengthBytes, 0);
-
-            deCoder = new Decoder();
-            deCoder.SetDecoderProperties(properties);
-            deCoder.Code(input, output, input.Length, fileLength, null);
-            output.Flush();
             output.Close();
-            input.Close();
+            output.Dispose();
         }
-        catch (System.Exception ex)
+
+        status = CompressState.Finish;
+        if (finishCallback != null)
         {
-            Debug.LogError(ex.Message);
+            finishCallback();
         }
-        decompressFileLZMAFinish = true;
     }
 }
