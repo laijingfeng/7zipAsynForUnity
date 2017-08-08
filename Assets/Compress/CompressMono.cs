@@ -11,6 +11,8 @@ using UnityEngine;
 /// </summary>
 public class CompressMono : SingletonMono<CompressMono>
 {
+    #region Compress
+
     private bool compressFileLZMAFinish = true;
     private Encoder coder = null;
     private string inFile;
@@ -88,7 +90,7 @@ public class CompressMono : SingletonMono<CompressMono>
             byte[] data = BitConverter.GetBytes(input.Length);
 
             output.Write(data, 0, data.Length);
-            
+
             coder.Code(input, output, input.Length, -1, null);
             output.Flush();
             output.Close();
@@ -100,6 +102,10 @@ public class CompressMono : SingletonMono<CompressMono>
         }
         compressFileLZMAFinish = true;
     }
+
+    #endregion Compress
+
+    #region Decompress
 
     private bool decompressFileLZMAFinish = true;
     private Decoder deCoder = null;
@@ -187,4 +193,6 @@ public class CompressMono : SingletonMono<CompressMono>
         }
         decompressFileLZMAFinish = true;
     }
+
+    #endregion Decompress
 }
