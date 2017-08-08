@@ -43,6 +43,7 @@ public enum CompressState
     None = 0,
     Working,
     Finish,
+    Error,
 }
 
 public delegate void CompressCallback(long finishSize, long totalSize, CompressState status);

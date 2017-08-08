@@ -80,7 +80,7 @@ public class CompressNotMono
         {
             if (!File.Exists(this.config.inFile))
             {
-                status = CompressState.Finish;
+                status = CompressState.Error;
                 if (finishCallback != null)
                 {
                     finishCallback();

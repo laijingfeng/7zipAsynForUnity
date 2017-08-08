@@ -18,28 +18,27 @@ public class Test : MonoBehaviour
     [ContextMenu("Do")]
     private void Do()
     {
-        float tt = Time.realtimeSinceStartup;
-        Debug.LogWarning("t=" + Time.realtimeSinceStartup);
-        Compress.Inst.CompressFile(Application.dataPath + "/../" + fileName, null, (n, t) =>
+        float startTime = Time.realtimeSinceStartup;
+        CompressMono.Inst.CompressFile(Application.dataPath + "/../" + fileName, null, (n, t) =>
         {
             Debug.LogWarning(string.Format("{0}/{1}", n, t));
         }, (finish) =>
         {
-            Debug.LogWarning("time=" + Time.realtimeSinceStartup + " " + (Time.realtimeSinceStartup - tt));
+            Debug.LogWarning("time=" + Time.realtimeSinceStartup + " " + (Time.realtimeSinceStartup - startTime));
         });
     }
 
     [ContextMenu("UnDo")]
     private void UnDo()
     {
-        float tt = Time.realtimeSinceStartup;
+        float startTime = Time.realtimeSinceStartup;
         Debug.LogWarning("t=" + Time.realtimeSinceStartup);
-        Compress.Inst.DecompressFileLZMA(Application.dataPath + "/../" + fileName, null, (n, t) =>
+        CompressMono.Inst.DecompressFileLZMA(Application.dataPath + "/../" + fileName, null, (n, t) =>
         {
             Debug.LogWarning(string.Format("{0}/{1}", n, t));
         }, (finish) =>
         {
-            Debug.LogWarning("time=" + Time.realtimeSinceStartup + " " + (Time.realtimeSinceStartup - tt));
+            Debug.LogWarning("time=" + Time.realtimeSinceStartup + " " + (Time.realtimeSinceStartup - startTime));
         });
     }
 

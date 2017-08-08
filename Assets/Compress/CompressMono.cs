@@ -9,7 +9,7 @@ using UnityEngine;
 /// <summary>
 /// 文件压缩逻辑
 /// </summary>
-public class Compress : SingletonMono<Compress>
+public class CompressMono : SingletonMono<CompressMono>
 {
     private bool compressFileLZMAFinish = true;
     private Encoder coder = null;
@@ -63,14 +63,7 @@ public class Compress : SingletonMono<Compress>
 
         if (finish != null)
         {
-            //if (coder == null || coder.NowPos64 < coder.TargetPos64)
-            //{
-            //    finish(false);
-            //}
-            //else
-            {
-                finish(true);
-            }
+            finish(true);
         }
     }
 
@@ -95,8 +88,6 @@ public class Compress : SingletonMono<Compress>
             byte[] data = BitConverter.GetBytes(input.Length);
 
             output.Write(data, 0, data.Length);
-
-            Debug.LogWarning(input.Length + " ");
             
             coder.Code(input, output, input.Length, -1, null);
             output.Flush();
@@ -159,14 +150,7 @@ public class Compress : SingletonMono<Compress>
 
         if (finish != null)
         {
-            if (deCoder == null || deCoder.NowPos64 < deCoder.TargetPos64)
-            {
-                finish(false);
-            }
-            else
-            {
-                finish(true);
-            }
+            finish(true);
         }
     }
 
@@ -191,7 +175,6 @@ public class Compress : SingletonMono<Compress>
 
             deCoder = new Decoder();
             deCoder.SetDecoderProperties(properties);
-            Debug.LogWarning(input.Length + " " + fileLength);
             deCoder.Code(input, output, input.Length, fileLength, null);
 
             output.Flush();

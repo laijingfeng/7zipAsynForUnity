@@ -120,7 +120,8 @@ public class MultiCompress
         {
             for (int i = 0; i < workingTask.Count; i++)
             {
-                if (workingTask[i].Status == CompressState.Finish)
+                if (workingTask[i].Status == CompressState.Finish
+                    || workingTask[i].Status == CompressState.Error)
                 {
                     finishTask.Add(workingTask[i]);
                     workingTask.RemoveAt(i);
