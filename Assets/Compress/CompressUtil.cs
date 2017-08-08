@@ -1,4 +1,5 @@
-﻿
+﻿using System.Collections.Generic;
+
 public class CompressUtil
 {
     /// <summary>
@@ -28,6 +29,15 @@ public class CompressUtil
     public static string GetDefaultFileName(string compress_file_name)
     {
         return compress_file_name.Replace(EXTENSION, "");
+    }
+
+    public static List<string> GetTestFiles()
+    {
+        return new List<string>()
+        {
+            "general_assets_bundle",
+            "pet005_bundle",
+        };
     }
 }
 

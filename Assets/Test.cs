@@ -51,11 +51,7 @@ public class Test : MonoBehaviour
     private void MultiCompress()
     {
         string dir = Application.dataPath + "/../";
-        List<string> files = new List<string>()
-        {
-            "general_assets_bundle",
-            "pet005_bundle",
-        };
+        List<string> files = CompressUtil.GetTestFiles();
         multiCompress = new MultiCompress();
         multiCompress.SetCallback((finish, total, status) =>
         {
@@ -70,7 +66,7 @@ public class Test : MonoBehaviour
             });
         }
         multiCompressStartTime = Time.realtimeSinceStartup;
-        multiCompress.StartCompress();
+        multiCompress.Start();
         this.StartCoroutine("IE_UpdateMultiCompress");
     }
 
@@ -101,11 +97,7 @@ public class Test : MonoBehaviour
     private void MultiDecompress()
     {
         string dir = Application.dataPath + "/../";
-        List<string> files = new List<string>()
-        {
-            "general_assets_bundle",
-            "pet005_bundle",
-        };
+        List<string> files = CompressUtil.GetTestFiles();
         multiDecompress = new MultiDecompress();
         multiDecompress.SetCallback((finish, total, status) =>
         {

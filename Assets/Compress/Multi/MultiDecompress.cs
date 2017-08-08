@@ -3,84 +3,14 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
-public class MultiDecompress
+public class MultiDecompress : MultiCompressBase
 {
-    private List<CompressConfig> configs = new List<CompressConfig>();
-    private List<DecompressNotMono> workingTask = new List<DecompressNotMono>();
-    private List<DecompressNotMono> finishTask = new List<DecompressNotMono>();
-    private CompressCallback callback = null;
-    private bool working = false;
-    /// <summary>
-    /// 系统的核数
-    /// </summary>
-    private int processorCount = 1;
-    public CompressState Status
-    {
-        get
-        {
-            if (!working)
-            {
-                return CompressState.None;
-            }
-            foreach (DecompressNotMono com in workingTask)
-            {
-                if (com.Status == CompressState.Working)
-                {
-                    return CompressState.Working;
-                }
-            }
-            if (configs.Count > 0)
-            {
-                return CompressState.Working;
-            }
-            return CompressState.Finish;
-        }
-    }
-
-    public long FinishSize
-    {
-        get
-        {
-            long finishSize = 0;
-            foreach (DecompressNotMono com in finishTask)
-            {
-                finishSize += com.FinishSize;
-            }
-            foreach (DecompressNotMono com in workingTask)
-            {
-                finishSize += com.FinishSize;
-            }
-            return finishSize;
-        }
-    }
-
-    private long totalSize = 0;
-    public long TotalSize
-    {
-        get
-        {
-            return totalSize;
-        }
-    }
-
     public MultiDecompress()
+        :base()
     {
-        processorCount = SystemInfo.processorCount;
-        callback = null;
-        working = false;
-        totalSize = 0;
     }
 
-    /// <summary>
-    /// 设置回调
-    /// </summary>
-    /// <param name="callback"></param>
-    public void SetCallback(CompressCallback callback)
-    {
-        this.callback = callback;
-    }
-
-    public void AddCompressConfig(CompressConfig config)
+    public override void AddCompressConfig(CompressConfig config)
     {
         if (config.inFileSize == 0
             && File.Exists(config.inFile))
@@ -107,7 +37,7 @@ public class MultiDecompress
             });
             if (working)
             {
-                com.StartCompress();
+                com.Start();
             }
             workingTask.Add(com);
         }
@@ -150,7 +80,7 @@ public class MultiDecompress
                 {
                     Refresh();
                 });
-                com.StartCompress();
+                com.Start();
                 workingTask.Add(com);
                 configs.RemoveAt(0);
             }
@@ -166,7 +96,7 @@ public class MultiDecompress
         working = true;
         foreach (DecompressNotMono com in workingTask)
         {
-            com.StartCompress();
+            com.Start();
         }
     }
 
