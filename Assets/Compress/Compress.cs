@@ -11,35 +11,6 @@ using UnityEngine;
 /// </summary>
 public class Compress : SingletonMono<Compress>
 {
-    /// <summary>
-    /// 打包后的文件后缀名
-    /// </summary>
-    public const string EXTENSION = ".zip";
-
-    /// <summary>
-    /// 是否是压缩包
-    /// </summary>
-    public static bool IsCompressFile(string file_name)
-    {
-        return file_name.Contains(EXTENSION);
-    }
-
-    /// <summary>
-    /// 获得文件的压缩包名
-    /// </summary>
-    public static string GetCompressFileName(string file_name)
-    {
-        return file_name + EXTENSION;
-    }
-
-    /// <summary>
-    /// 获得默认文件名
-    /// </summary>
-    public static string GetDefaultFileName(string compress_file_name)
-    {
-        return compress_file_name.Replace(EXTENSION, "");
-    }
-
     private bool compressFileLZMAFinish = true;
     private Decoder coder = null;
     private string inFile;
@@ -52,7 +23,7 @@ public class Compress : SingletonMono<Compress>
     {
         if (out_file == null)
         {
-            out_file = GetCompressFileName(in_file);
+            out_file = CompressUtil.GetCompressFileName(in_file);
         }
         compressFileLZMAFinish = false;
         coder = null;
@@ -144,7 +115,7 @@ public class Compress : SingletonMono<Compress>
     {
         if (outFile == null)
         {
-            outFile = GetDefaultFileName(inFile);
+            outFile = CompressUtil.GetDefaultFileName(inFile);
         }
         decompressFileLZMAFinish = false;
         deCoder = null;
