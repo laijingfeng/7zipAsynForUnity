@@ -34,7 +34,11 @@ public abstract class CompressNotMonoBase
         }
     }
 
-    public CompressNotMonoBase(CompressConfig config, Action callback = null)
+    public CompressNotMonoBase()
+    {
+    }
+
+    public virtual void SetConfig(CompressConfig config, Action callback = null)
     {
         this.config = config;
         this.finishCallback = callback;

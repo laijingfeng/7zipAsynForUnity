@@ -112,7 +112,7 @@ public class Test : MonoBehaviour
             });
         }
         multiDecompressStartTime = Time.realtimeSinceStartup;
-        multiDecompress.StartCompress();
+        multiDecompress.Start();
         this.StartCoroutine("IE_UpdateMultiDecompress");
     }
 

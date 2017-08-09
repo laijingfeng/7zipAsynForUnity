@@ -22,7 +22,7 @@ public class DecompressNotMono : CompressNotMonoBase
     {
         get
         {
-            if(config != null)
+            if (config != null)
             {
                 return config.inFileSize;
             }
@@ -30,23 +30,35 @@ public class DecompressNotMono : CompressNotMonoBase
         }
     }
 
-    public DecompressNotMono(CompressConfig config, Action callback = null)
-        : base(config, callback)
+    public DecompressNotMono()
+        : base()
+    {
+
+    }
+
+    public static CompressConfig CalInFileSize(CompressConfig config)
     {
         if (config.inFileSize == 0
-            && File.Exists(this.config.inFile))
+            && File.Exists(config.inFile))
         {
-            FileStream input = new FileStream(this.config.inFile, FileMode.Open);
+            FileStream input = new FileStream(config.inFile, FileMode.Open);
             byte[] properties = new byte[5];
             input.Read(properties, 0, 5);
 
             byte[] fileLengthBytes = new byte[8];
             input.Read(fileLengthBytes, 0, 8);
 
-            this.config.inFileSize = BitConverter.ToInt64(fileLengthBytes, 0);
+            config.inFileSize = BitConverter.ToInt64(fileLengthBytes, 0);
             input.Close();
             input.Dispose();
         }
+        return config;
+    }
+
+    public override void SetConfig(CompressConfig config, Action callback = null)
+    {
+        base.SetConfig(config, callback);
+        this.config = CalInFileSize(this.config);
     }
 
     protected override void DoWork()

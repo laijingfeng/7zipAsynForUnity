@@ -30,17 +30,29 @@ public class CompressNotMono : CompressNotMonoBase
         }
     }
 
-    public CompressNotMono(CompressConfig config, Action callback = null)
-        : base(config, callback)
+    public CompressNotMono()
+        : base()
+    {
+
+    }
+    
+    public static CompressConfig CalInFileSize(CompressConfig config)
     {
         if (config.inFileSize == 0
-            && File.Exists(this.config.inFile))
+            && File.Exists(config.inFile))
         {
-            FileStream input = new FileStream(this.config.inFile, FileMode.Open);
+            FileStream input = new FileStream(config.inFile, FileMode.Open);
             config.inFileSize = input.Length;
             input.Close();
             input.Dispose();
         }
+        return config;
+    }
+
+    public override void SetConfig(CompressConfig config, Action callback = null)
+    {
+        base.SetConfig(config, callback);
+        this.config = CalInFileSize(this.config);
     }
 
     protected override void DoWork()

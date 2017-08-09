@@ -1,11 +1,11 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-public abstract class MultiCompressBase
+public abstract class MultiCompressBase<T> where T : CompressNotMonoBase, new()
 {
     protected List<CompressConfig> configs = new List<CompressConfig>();
-    protected List<CompressNotMonoBase> workingTask = new List<CompressNotMonoBase>();
-    protected List<CompressNotMonoBase> finishTask = new List<CompressNotMonoBase>();
+    protected List<T> workingTask = new List<T>();
+    protected List<T> finishTask = new List<T>();
     protected CompressCallback callback = null;
     protected bool working = false;
     /// <summary>
@@ -22,12 +22,21 @@ public abstract class MultiCompressBase
         }
     }
 
-    public MultiCompressBase()
+    public long FinishSize
     {
-        processorCount = SystemInfo.processorCount;
-        callback = null;
-        working = false;
-        totalSize = 0;
+        get
+        {
+            long finishSize = 0;
+            foreach (T com in finishTask)
+            {
+                finishSize += com.FinishSize;
+            }
+            foreach (T com in workingTask)
+            {
+                finishSize += com.FinishSize;
+            }
+            return finishSize;
+        }
     }
 
     public CompressState Status
@@ -38,7 +47,7 @@ public abstract class MultiCompressBase
             {
                 return CompressState.None;
             }
-            foreach (CompressNotMonoBase com in workingTask)
+            foreach (T com in workingTask)
             {
                 if (com.Status == CompressState.Working)
                 {
@@ -53,20 +62,78 @@ public abstract class MultiCompressBase
         }
     }
 
-    public long FinishSize
+    public MultiCompressBase()
     {
-        get
+        processorCount = SystemInfo.processorCount;
+        callback = null;
+        working = false;
+        totalSize = 0;
+    }
+
+    public abstract CompressConfig CalInFileSize(CompressConfig config);
+
+    public void AddCompressConfig(CompressConfig config)
+    {
+        config = CalInFileSize(config);
+        totalSize += config.inFileSize;
+
+        if (processorCount > workingTask.Count)
         {
-            long finishSize = 0;
-            foreach (CompressNotMonoBase com in finishTask)
+            T com = new T();
+            com.SetConfig(config, () =>
             {
-                finishSize += com.FinishSize;
-            }
-            foreach (CompressNotMonoBase com in workingTask)
+                Refresh();
+            });
+            if (working)
             {
-                finishSize += com.FinishSize;
+                com.Start();
             }
-            return finishSize;
+            workingTask.Add(com);
+        }
+        else
+        {
+            configs.Add(config);
+        }
+    }
+
+    object lockd = new object();
+    private void Refresh()
+    {
+        if (!working)
+        {
+            return;
+        }
+        lock (lockd)
+        {
+            for (int i = 0; i < workingTask.Count; i++)
+            {
+                if (workingTask[i].Status == CompressState.Finish
+                    || workingTask[i].Status == CompressState.Error)
+                {
+                    finishTask.Add(workingTask[i]);
+                    workingTask.RemoveAt(i);
+                    i--;
+                }
+            }
+            while (true)
+            {
+                if (configs.Count <= 0)
+                {
+                    break;
+                }
+                if (workingTask.Count >= processorCount)
+                {
+                    break;
+                }
+                T com = new T();
+                com.SetConfig(configs[0], () =>
+                {
+                    Refresh();
+                });
+                com.Start();
+                workingTask.Add(com);
+                configs.RemoveAt(0);
+            }
         }
     }
 
@@ -79,9 +146,6 @@ public abstract class MultiCompressBase
         this.callback = callback;
     }
 
-    public abstract void AddCompressConfig(CompressConfig config);
-    protected abstract void Refresh();
-
     public void Start()
     {
         if (working)
@@ -89,7 +153,7 @@ public abstract class MultiCompressBase
             return;
         }
         working = true;
-        foreach (CompressNotMonoBase com in workingTask)
+        foreach (T com in workingTask)
         {
             com.Start();
         }
