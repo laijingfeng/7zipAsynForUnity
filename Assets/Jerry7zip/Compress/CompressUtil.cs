@@ -30,15 +30,6 @@ public class CompressUtil
     {
         return compress_file_name.Replace(EXTENSION, "");
     }
-
-    public static List<string> GetTestFiles()
-    {
-        return new List<string>()
-        {
-            "general_assets_bundle",
-            "pet005_bundle",
-        };
-    }
 }
 
 public class CompressConfig

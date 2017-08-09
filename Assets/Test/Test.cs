@@ -6,7 +6,6 @@ public class Test : MonoBehaviour
 {
     void Start()
     {
-
     }
 
     void Update()
@@ -50,19 +49,17 @@ public class Test : MonoBehaviour
     [ContextMenu("MultiCompress")]
     private void MultiCompress()
     {
-        string dir = Application.dataPath + "/../";
-        List<string> files = CompressUtil.GetTestFiles();
         multiCompress = new MultiCompress();
         multiCompress.SetCallback((finish, total, status) =>
         {
             Debug.LogWarning(string.Format("{0:G}/{1:G} {2}% {3}", finish, total, total == 0 ? 0f : finish * 1.0f / total * 100f, status));
         });
-        foreach (string file in files)
+        foreach (string file in TestUtil.TestFiles)
         {
             multiCompress.AddCompressConfig(new CompressConfig()
             {
-                inFile = dir + file,
-                outFile = dir + CompressUtil.GetCompressFileName(file),
+                inFile = TestUtil.TestDir + file,
+                outFile = TestUtil.TestDir + CompressUtil.GetCompressFileName(file),
             });
         }
         multiCompressStartTime = Time.realtimeSinceStartup;
@@ -96,19 +93,17 @@ public class Test : MonoBehaviour
     [ContextMenu("MultiDecompress")]
     private void MultiDecompress()
     {
-        string dir = Application.dataPath + "/../";
-        List<string> files = CompressUtil.GetTestFiles();
         multiDecompress = new MultiDecompress();
         multiDecompress.SetCallback((finish, total, status) =>
         {
             Debug.LogWarning(string.Format("{0:G}/{1:G} {2}% {3}", finish, total, total == 0 ? 0f : finish * 1.0f / total * 100f, status));
         });
-        foreach (string file in files)
+        foreach (string file in TestUtil.TestFiles)
         {
             multiDecompress.AddCompressConfig(new CompressConfig()
             {
-                inFile = dir + CompressUtil.GetCompressFileName(file),
-                outFile = dir + file,
+                inFile = TestUtil.TestDir + CompressUtil.GetCompressFileName(file),
+                outFile = TestUtil.TestDir + file,
             });
         }
         multiDecompressStartTime = Time.realtimeSinceStartup;
