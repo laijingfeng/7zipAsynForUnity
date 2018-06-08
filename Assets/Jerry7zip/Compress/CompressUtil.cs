@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+﻿using System;
 
 public class CompressUtil
 {
@@ -29,6 +29,44 @@ public class CompressUtil
     public static string GetDefaultFileName(string compress_file_name)
     {
         return compress_file_name.Replace(EXTENSION, "");
+    }
+
+    static public string Bytes2String(byte[] msg)
+    {
+        return BitConverter.ToString(msg).Replace("-", "");
+    }
+
+    static public byte[] String2Bytes(string msg)
+    {
+        msg = msg.Trim();
+        if (string.IsNullOrEmpty(msg))
+        {
+            return null;
+        }
+        int len = msg.Length;
+        if (len % 2 == 1)
+        {
+            return null;
+        }
+        byte[] data = new byte[len / 2];
+        for (int i = 0, j = 0; i < len; i += 2, j++)
+        {
+            data[j] = (byte)(CharToHex(msg[i]) * 16 + CharToHex(msg[i + 1]));
+        }
+        return data;
+    }
+
+    static private byte CharToHex(char ch)
+    {
+        if (ch >= '0' && ch <= '9')
+        {
+            return (byte)(ch - '0');
+        }
+        else if (ch >= 'A' && ch <= 'Z')
+        {
+            return (byte)(ch - 'A' + 10);
+        }
+        return 0;
     }
 }
 

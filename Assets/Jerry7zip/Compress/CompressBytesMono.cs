@@ -7,45 +7,38 @@ using System.Threading;
 using UnityEngine;
 
 /// <summary>
-/// 文件压缩逻辑
+/// 二进制压缩
 /// </summary>
-public class CompressMono : SingletonMono<CompressMono>
+public class CompressBytesMono : SingletonMono<CompressBytesMono>
 {
     #region Compress
 
-    private bool compressFileLZMAFinish = true;
+    private bool compressBytesLZMAFinish = true;
     private Encoder coder = null;
-    private string inFile;
-    private string outFile;
+    private byte[] inBytes;
+    private byte[] outBytes;
 
-    /// <summary>
-    /// 压缩文件
-    /// </summary>
-    public void CompressFile(string in_file, string out_file = null, Action<Int64, Int64> progress = null, Action<bool> finish = null)
+    public void CompressBytes(byte[] in_bytes, Action<Int64, Int64> progress = null, Action<byte[]> finish = null)
     {
-        if (out_file == null)
-        {
-            out_file = CompressUtil.GetCompressFileName(in_file);
-        }
-        compressFileLZMAFinish = false;
+        compressBytesLZMAFinish = false;
         coder = null;
-        inFile = in_file;
-        outFile = out_file;
+        inBytes = in_bytes;
+        outBytes = null;
 
-        Thread decompressThread = new Thread(new ThreadStart(DoCompressFileLZMA));
+        Thread decompressThread = new Thread(new ThreadStart(DoCompressBytesLZMA));
         decompressThread.Start();
 
         if (progress != null || finish != null)
         {
-            this.StartCoroutine(IE_WaitCompressFileLZMA(progress, finish));
+            this.StartCoroutine(IE_WaitCompressBytesLZMA(progress, finish));
         }
     }
 
-    private IEnumerator IE_WaitCompressFileLZMA(Action<Int64, Int64> progress, Action<bool> finish)
+    private IEnumerator IE_WaitCompressBytesLZMA(Action<Int64, Int64> progress, Action<byte[]> finish)
     {
         if (progress != null)
         {
-            while (!compressFileLZMAFinish)
+            while (!compressBytesLZMAFinish)
             {
                 if (coder != null)
                 {
@@ -60,30 +53,25 @@ public class CompressMono : SingletonMono<CompressMono>
         }
         else
         {
-            yield return new WaitUntil(() => compressFileLZMAFinish == true);
+            yield return new WaitUntil(() => compressBytesLZMAFinish == true);
         }
 
         if (finish != null)
         {
-            finish(true);
+            finish(outBytes);
         }
+
+        inBytes = null;
+        outBytes = null;
     }
 
-    /// <summary>
-    /// 使用LZMA算法压缩文件  
-    /// </summary>
-    private void DoCompressFileLZMA()
+    private void DoCompressBytesLZMA()
     {
         try
         {
-            if (!File.Exists(inFile))
-            {
-                compressFileLZMAFinish = true;
-                return;
-            }
-            FileStream input = new FileStream(inFile, FileMode.Open);
-            FileStream output = new FileStream(outFile, FileMode.OpenOrCreate);
-
+            MemoryStream input = new MemoryStream(inBytes);
+            MemoryStream output = new MemoryStream();
+            
             coder = new Encoder();
             coder.WriteCoderProperties(output);
 
@@ -93,50 +81,49 @@ public class CompressMono : SingletonMono<CompressMono>
 
             coder.Code(input, output, input.Length, -1, null);
             output.Flush();
+
+            outBytes = output.ToArray();
+
             output.Close();
             input.Close();
         }
         catch (System.Exception ex)
         {
-            Debug.LogError(ex.Message);
+            Debug.LogError(ex.Message + "\n" + ex.StackTrace);
         }
-        compressFileLZMAFinish = true;
+        compressBytesLZMAFinish = true;
     }
-
+    
     #endregion Compress
 
     #region Decompress
 
-    private bool decompressFileLZMAFinish = true;
+    private bool decompressBytesLZMAFinish = true;
     private Decoder deCoder = null;
-    private string deInFile;
-    private string deOutFile;
+    private byte[] deInBytes;
+    private byte[] deOutBytes;
 
-    public void DecompressFileLZMA(string inFile, string outFile, Action<UInt64, UInt64> progress = null, Action<bool> finish = null)
+    public void DecompressBytesLZMA(byte[] in_bytes, string outFile, Action<UInt64, UInt64> progress = null, Action<byte[]> finish = null)
     {
-        if (outFile == null)
-        {
-            outFile = CompressUtil.GetDefaultFileName(inFile);
-        }
-        decompressFileLZMAFinish = false;
+        decompressBytesLZMAFinish = false;
         deCoder = null;
-        deInFile = inFile;
-        deOutFile = outFile;
+        deInBytes = in_bytes;
+        deOutBytes = null;
 
         Thread decompressThread = new Thread(new ThreadStart(DoDecompressFileLZMA));
         decompressThread.Start();
 
         if (progress != null || finish != null)
         {
-            this.StartCoroutine(IE_WaitDecompressFileLZMA(progress, finish));
+            this.StartCoroutine(IE_WaitDecompressBytesLZMA(progress, finish));
         }
     }
 
-    private IEnumerator IE_WaitDecompressFileLZMA(Action<UInt64, UInt64> progress, Action<bool> finish)
+    private IEnumerator IE_WaitDecompressBytesLZMA(Action<UInt64, UInt64> progress, Action<byte[]> finish)
     {
         if (progress != null)
         {
-            while (!decompressFileLZMAFinish)
+            while (!decompressBytesLZMAFinish)
             {
                 if (deCoder != null)
                 {
@@ -151,26 +138,24 @@ public class CompressMono : SingletonMono<CompressMono>
         }
         else
         {
-            yield return new WaitUntil(() => decompressFileLZMAFinish == true);
+            yield return new WaitUntil(() => decompressBytesLZMAFinish == true);
         }
 
         if (finish != null)
         {
-            finish(true);
+            finish(deOutBytes);
         }
+
+        deInBytes = null;
+        deOutBytes = null;
     }
 
     private void DoDecompressFileLZMA()
     {
         try
         {
-            if (!File.Exists(deInFile))
-            {
-                decompressFileLZMAFinish = true;
-                return;
-            }
-            FileStream input = new FileStream(deInFile, FileMode.Open);
-            FileStream output = new FileStream(deOutFile, FileMode.OpenOrCreate);
+            MemoryStream input = new MemoryStream(deInBytes);
+            MemoryStream output = new MemoryStream();
 
             byte[] properties = new byte[5];
             input.Read(properties, 0, 5);
@@ -184,14 +169,17 @@ public class CompressMono : SingletonMono<CompressMono>
             deCoder.Code(input, output, input.Length, fileLength, null);
 
             output.Flush();
+            
+            deOutBytes = output.ToArray();
+
             output.Close();
             input.Close();
         }
         catch (System.Exception ex)
         {
-            Debug.LogError(ex.Message);
+            Debug.LogError(ex.Message + "\n" + ex.StackTrace);
         }
-        decompressFileLZMAFinish = true;
+        decompressBytesLZMAFinish = true;
     }
 
     #endregion Decompress
