@@ -43,7 +43,7 @@ public class BuildTools : Editor
     {
         //PlayerSettings.productName = "UnityProject";
         PlayerSettings.companyName = "Jerry";
-        PlayerSettings.bundleIdentifier = string.Format("com.jerry.lai.{0}", PlayerSettings.productName);
+        PlayerSettings.applicationIdentifier = string.Format("com.jerry.lai.{0}", PlayerSettings.productName);
         PlayerSettings.Android.keystoreName = "./jerry.keystore";
         PlayerSettings.Android.keystorePass = "jerrylai@jingfeng*1990";
         PlayerSettings.Android.keyaliasName = "jerrylai";
